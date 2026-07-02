@@ -5,7 +5,235 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+<style>
+    *, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #0f0f0f;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Inter', system-ui, sans-serif;
+    color: #f0d9b5;
+}
+
+/* Subtle radial glow behind the board */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse 70% 60% at 50% 50%, rgba(181,136,99,0.1) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.app {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    padding: 32px 16px;
+}
+
+header h1 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 2rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: #f0d9b5;
+    text-align: center;
+    opacity: 0.92;
+}
+
+.game-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+/* Status bar */
+#status-bar {
+    width: 576px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 36px;
+}
+
+#turn {
+    font-size: 0.95rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #c8a882;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 999px;
+    padding: 6px 20px;
+    transition: color 0.3s ease;
+}
+
+/* Board wrapper — adds the glow + border */
+#board-wrap {
+    padding: 6px;
+    border-radius: 4px;
+    background: #1c1c1c;
+    box-shadow:
+        0 0 0 1px rgba(255,255,255,0.06),
+        0 20px 60px rgba(0,0,0,0.8),
+        0 4px 16px rgba(0,0,0,0.6);
+}
+
+#board {
+    display: grid;
+    grid-template-columns: repeat(8, 70px);
+    width: 560px;
+    border-radius: 2px;
+    overflow: hidden;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+}
+
+/* Squares */
+.square {
+    width: 70px;
+    height: 70px;
+    position: relative;
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-end;
+    padding: 3px;
+    cursor: pointer;
+    transition: filter 0.1s ease;
+}
+
+.light { background: #f0d9b5; }
+.dark  { background: #b58863; }
+
+.square:hover {
+    filter: brightness(1.12);
+}
+
+/* Coordinates */
+.light .coordinate,
+.light .number { color: #b58863; }
+.dark .coordinate,
+.dark .number  { color: #f0d9b5; }
+
+.coordinate {
+    position: absolute;
+    bottom: 3px;
+    left: 3px;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+    font-family: 'Inter', system-ui, sans-serif;
+}
+
+.number {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+    font-family: 'Inter', system-ui, sans-serif;
+}
+
+/* Pieces */
+.piece {
+    width: 85%;
+    height: 85%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    user-select: none;
+    transition: transform 0.12s ease;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.45));
+}
+
+/* Selected square highlight */
+.selected {
+    box-shadow: inset 0 0 0 9999px rgba(246, 246, 105, 0.48);
+}
+
+/* Move dots */
+.move-dot {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.25);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 2;
+    animation: pop-in 0.15s ease both;
+}
+
+/* Capture ring */
+.square:has(.piece) .move-dot {
+    width: 64px;
+    height: 64px;
+    background: transparent;
+    border: 4px solid rgba(0, 0, 0, 0.22);
+    border-radius: 50%;
+}
+
+@keyframes pop-in {
+    from { transform: translate(-50%, -50%) scale(0.4); opacity: 0; }
+    to   { transform: translate(-50%, -50%) scale(1);   opacity: 1; }
+}
+
+/* Controls */
+.controls {
+    display: flex;
+    gap: 12px;
+    margin-top: 4px;
+}
+
+#reset-btn {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 24px;
+    background: transparent;
+    border: 1.5px solid rgba(181, 136, 99, 0.6);
+    color: #c8a882;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.1s ease;
+}
+
+#reset-btn:hover {
+    background: rgba(181, 136, 99, 0.15);
+    border-color: #b58863;
+    color: #f0d9b5;
+    transform: translateY(-1px);
+}
+
+#reset-btn:active {
+    transform: translateY(0);
+}
+
+#reset-btn svg {
+    opacity: 0.8;
+}
+</style>
 </head>
 <body>
     <div class="app">
@@ -27,6 +255,179 @@
             </div>
         </div>
     </div>
-    <script type="module" src="script.js"></script>
+<script>
+    import { Chess } from "https://cdn.jsdelivr.net/npm/chess.js@latest/+esm";
+
+const board = document.getElementById("board");
+const game = new Chess();
+
+const pieces = {
+    r: "Chess_rdt45.svg",
+    n: "Chess_ndt45.svg",
+    b: "Chess_bdt45.svg",
+    q: "Chess_qdt45.svg",
+    k: "Chess_kdt45.svg",
+    p: "Chess_pdt45.svg",
+
+    R: "Chess_rlt45.svg",
+    N: "Chess_nlt45.svg",
+    B: "Chess_blt45.svg",
+    Q: "Chess_qlt45.svg",
+    K: "Chess_klt45.svg",
+    P: "Chess_plt45.svg"
+};
+
+let selectedSquare = null;
+
+function renderBoard() {
+    board.innerHTML = "";
+
+    document.getElementById("turn").textContent =
+        game.turn() === "w"
+            ? "White to move"
+            : "Black to move";
+
+    if (game.isCheckmate()) {
+        document.getElementById("turn").textContent =
+            game.turn() === "w"
+                ? "Checkmate — Black wins!"
+                : "Checkmate — White wins!";
+    } else if (game.isDraw()) {
+        document.getElementById("turn").textContent = "Draw!";
+    } else if (game.isCheck()) {
+        document.getElementById("turn").textContent =
+            game.turn() === "w"
+                ? "White to move — Check!"
+                : "Black to move — Check!";
+    }
+
+    const boardState = game.board();
+
+    for (let row = 0; row < 8; row++) {
+        for (let col = 0; col < 8; col++) {
+
+            const square = document.createElement("div");
+            square.classList.add("square");
+
+            if ((row + col) % 2 === 0) {
+                square.classList.add("light");
+            } else {
+                square.classList.add("dark");
+            }
+
+            square.dataset.row = row;
+            square.dataset.col = col;
+            square.dataset.square =
+                String.fromCharCode(97 + col) + (8 - row);
+
+            if (row === 7) {
+                const letter = document.createElement("span");
+                letter.textContent = String.fromCharCode(97 + col);
+                letter.classList.add("coordinate");
+                square.appendChild(letter);
+            }
+
+            if (col === 0) {
+                const number = document.createElement("span");
+                number.textContent = 8 - row;
+                number.classList.add("number");
+                square.appendChild(number);
+            }
+
+            const currentPiece = boardState[row][col];
+
+            if (currentPiece) {
+                const pieceCode =
+                    currentPiece.color === "w"
+                        ? currentPiece.type.toUpperCase()
+                        : currentPiece.type;
+
+                const pieceElement = document.createElement("img");
+                pieceElement.src = `pieces/${pieces[pieceCode]}`;
+                pieceElement.classList.add("piece");
+                square.appendChild(pieceElement);
+            }
+
+            square.addEventListener("click", () => {
+
+                // Try move first
+                if (
+                    selectedSquare &&
+                    selectedSquare !== square.dataset.square
+                ) {
+                    const move = game.move({
+                        from: selectedSquare,
+                        to: square.dataset.square,
+                        promotion: "q"
+                    });
+
+                    if (move) {
+                        selectedSquare = null;
+                        renderBoard();
+                        return;
+                    }
+                }
+
+                document.querySelectorAll(".move-dot").forEach(dot => {
+                    dot.remove();
+                });
+
+                document.querySelectorAll(".selected").forEach(sq => {
+                    sq.classList.remove("selected");
+                });
+
+                // Empty square clears selection
+                if (!currentPiece) {
+                    selectedSquare = null;
+                    return;
+                }
+
+                // Wrong color piece clears selection
+                if (currentPiece.color !== game.turn()) {
+                    selectedSquare = null;
+                    return;
+                }
+
+                // Same piece deselects
+                if (selectedSquare === square.dataset.square) {
+                    selectedSquare = null;
+                    return;
+                }
+
+                // Select piece
+                selectedSquare = square.dataset.square;
+                square.classList.add("selected");
+
+                const moves = game.moves({
+                    square: selectedSquare,
+                    verbose: true
+                });
+
+                moves.forEach(move => {
+                    const target = document.querySelector(
+                        `[data-square="${move.to}"]`
+                    );
+
+                    if (!target) return;
+
+                    const dot = document.createElement("div");
+                    dot.classList.add("move-dot");
+                    target.appendChild(dot);
+                });
+            });
+
+            board.appendChild(square);
+        }
+    }
+}
+
+document.getElementById("reset-btn").addEventListener("click", () => {
+    game.reset();
+    selectedSquare = null;
+    renderBoard();
+});
+
+renderBoard();
+</script>
 </body>
 </html>
